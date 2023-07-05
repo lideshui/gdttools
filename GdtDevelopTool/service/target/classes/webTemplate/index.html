@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+    <title>汪汪汪</title>
+    <link rel="icon" href="/img/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/css/page/index.css" />
+    <div th:include="common/head :: head"></div>
+</head>
+
+<body>
+<div id="vue">
+    <!--页面顶部-->
+    <div class="nav-top">
+        <nav class="index-nav">
+            <div class="index-logo">
+                <a href="#"  @click.prevent="activeIndex = -1;">
+                    <img src="/img/favicon.ico"/>
+                    <span>二狗子的秘密基地</span>
+                </a>
+            </div>
+            <ul class="index-menu">
+                <li role="presentation" v-for="(tab, index) in tabs" :class="{active: activeIndex === index}" :key="tab.url">
+                    <a href="#" @click.prevent="activeIndex = index;">
+                        {{ tab.title }}
+                    </a>
+                </li>
+            </ul>
+            <div class="toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </div>
+
+    <!--页面主体-->
+    <div class="layout-container">
+        <video class="video-background" preload="auto" loop playsinline autoplay src="/img/sleep.mp4" tabindex="-1" muted="muted"></video>
+        <iframe class="iframe-container" v-for="(tab, index) in tabs" :src="tab.url" v-show="activeIndex === index"></iframe>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    let item = new Vue({
+        el: '#vue',
+        data: {
+            tabList: [],
+            activeTab: 0,
+            tabs: [
+                {
+                    title: "生成逻辑类",
+                    url: "http://localhost:8080/logicClass"
+                },
+                {
+                    title: "获取Java模板",
+                    url: "http://localhost:8080/javaTemplate"
+                },
+                {
+                    title: "暂未想好写什么",
+                    url: "http://localhost:8080/"
+                }
+            ],
+            activeIndex: -1
+        }
+    })
+</script>
+
+</body>
+
+</html>

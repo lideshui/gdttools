@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>GdtDevelopTool</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <modules>
+        <module>common</module>
+        <module>service</module>
+    </modules>
+
+    <!--所有工程的父工程-->
+    <packaging>pom</packaging>
+
+    <!--引入spring boot 父工程-->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.3.6.RELEASE</version>
+    </parent>
+
+    <!--定义jar包的版本号-->
+    <properties>
+        <cloud.version>Hoxton.SR7</cloud.version>
+        <alibaba.version>2.2.5.RELEASE</alibaba.version>
+        <lombok.version>1.18.10</lombok.version>
+        <fastjson.version>1.2.58</fastjson.version>
+        <gbase.version>1.0.0</gbase.version>
+        <freemarker.version>2.3.31</freemarker.version>
+        <jdbctemplate.version>5.3.12</jdbctemplate.version>
+        <mysqlconnector.version>8.0.26</mysqlconnector.version>
+
+
+    </properties>
+
+    <!--配置dependencyManagement锁定依赖的版本 并不是实际的依赖。-->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- 小辣椒 -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </dependency>
+
+            <!-- fastjson -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+
+            <!-- gbase驱动 -->
+            <dependency>
+                <groupId>com.gbase</groupId>
+                <artifactId>jdbc</artifactId>
+                <version>${gbase.version}</version>
+            </dependency>
+
+            <!-- template依赖 -->
+            <dependency>
+                <groupId>org.freemarker</groupId>
+                <artifactId>freemarker</artifactId>
+                <version>${freemarker.version}</version>
+            </dependency>
+
+            <!-- JdbcTemplate依赖 -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${jdbctemplate.version}</version>
+            </dependency>
+
+            <!--JDBC依赖 -->
+            <dependency>
+                <groupId>mysql</groupId>
+                <artifactId>mysql-connector-java</artifactId>
+                <version>${mysqlconnector.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
