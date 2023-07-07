@@ -365,7 +365,7 @@ public class ${className} extends DataServiceTemplateJavaParse {
         StringBuffer updateSql = new StringBuffer();
         updateSql.append(" UPDATE ${tableName} SET ");
         updateSql.append(" <#list fields as field><#if field.is_pub == '0' && field.name != "id" >${field.name} = ?, </#if></#list> ");
-        updateSql.append(" pub_modified_id = ?, pub_modified_name = ?, pub_modified_time = ? ");
+        updateSql.append(" <#list fields as field><#if field.is_pub == '0' && field.name != "id" >${field.name} = ?, </#if></#list> ");
         updateSql.append(" WHERE id = ? ");
 
         try{

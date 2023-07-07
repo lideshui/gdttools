@@ -9,7 +9,6 @@
     <version>1.0-SNAPSHOT</version>
 
     <modules>
-        <module>common</module>
         <module>service</module>
     </modules>
 
@@ -33,8 +32,6 @@
         <freemarker.version>2.3.31</freemarker.version>
         <jdbctemplate.version>5.3.12</jdbctemplate.version>
         <mysqlconnector.version>8.0.26</mysqlconnector.version>
-
-
     </properties>
 
     <!--配置dependencyManagement锁定依赖的版本 并不是实际的依赖。-->
