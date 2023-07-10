@@ -38,12 +38,6 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!--gbase连接工具-->
-        <dependency>
-            <groupId>com.gbase</groupId>
-            <artifactId>jdbc</artifactId>
-        </dependency>
-
         <!-- template依赖 -->
         <dependency>
             <groupId>org.freemarker</groupId>

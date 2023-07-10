@@ -33,3 +33,9 @@
     -webkit-box-shadow: -1px 0 0 0 #8cc5ff!important;
     box-shadow: -1px 0 0 0 #8cc5ff!important;
 }
+
+/* 代码块背景和左边行号样式 */
+pre {
+    border: 1px solid #409EFF!important;
+    border-radius: 8px;
+}

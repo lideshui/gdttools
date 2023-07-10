@@ -6,12 +6,12 @@ spring:
   datasource:
     pipe_hggl:
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1:3306/pipe_hggl?characterEncoding=utf-8&useSSL=false
+      url: jdbc:mysql://127.0.0.1:3306/pipe_hggl?characterEncoding=utf-8&useSSL=false&&useInformationSchema=true
       username: root
       password: 12345678
     pipe_platform:
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://127.0.0.1:3306/pipe_platform?characterEncoding=utf-8&useSSL=false
+      url: jdbc:mysql://127.0.0.1:3306/pipe_platform?characterEncoding=utf-8&useSSL=false&&useInformationSchema=true
       username: root
       password: 12345678
 

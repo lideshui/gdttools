@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
+    <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+    <link rel="stylesheet" type="text/css" href="/css/page/jointDebug.css" />
+    <div th:include="common/head :: head"></div>
+</head>
+
+<body>
+<div class="body-container">
+<!--    <video class="video-background" preload="auto" loop playsinline autoplay src="/img/shop.mp4" tabindex="-1" muted="muted"></video>-->
+    <div id="vue">
+        <div class="grid-condition">
+            <h2 class="grid-title">获取联调数据</h2>
+
+            <el-row :gutter="20">
+                <!-- 数据源下拉框 -->
+                <el-col :span="4">
+                    <h3 class="grid-tips"><span>*</span>请选择数据源</h3>
+                    <div class="grid-content bg-purple">
+                        <template>
+                            <el-select v-model="dataSourceValue" @change="checkDataSource" filterable style="width:100%" placeholder="请选择">
+                                <el-option
+                                        v-for="item in dataSourceOptions"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </div>
+                </el-col>
+                <!-- 数据表下拉框 -->
+                <el-col :span="4">
+                    <h3 class="grid-tips"><span>*</span>请选择数据表</h3>
+                    <div class="grid-content bg-purple">
+                        <template>
+                            <el-select v-model="tableValue" @change="checkTableName" filterable style="width:100%" placeholder="请选择">
+                                <el-option
+                                        v-for="item in tableOptions"
+                                        :key="item"
+                                        :label="item"
+                                        :value="item">
+                                </el-option>
+                            </el-select>
+                        </template>
+                    </div>
+                </el-col>
+                <!-- 生成方法复选框 -->
+                <el-col :span="16">
+                    <h3 class="grid-tips"><span>*</span>请选择需要获取的数据</h3>
+                    <div class="grid-content bg-purple">
+                        <template>
+                            <div>
+                                <el-radio-group v-model="checkedItems" @change="handleCheckedCitiesChange">
+                                    <el-radio-button v-for="item in items" :label="item" :key="item">{{item}}</el-radio-button>
+                                </el-radio-group>
+                            </div>
+                        </template>
+                    </div>
+                </el-col>
+            </el-row>
+
+            <div style="text-align: center; margin-top: 15px">
+                <el-button @click="generateLogicalTemplate" type="warning" round :disabled="isGenerateDisabled">获取联调数据</el-button>
+            </div>
+        </div>
+
+        <div class="grid-condition" v-if="showCodeBlock">
+            <!-- 生成code展示 -->
+            <h2 class="grid-title">联调数据展示</h2>
+            <template>
+                <el-table
+                        :data="tableData"
+                        table-layout='auto'
+                        class="tableAuto"
+                    >
+                    <el-table-column
+                        v-for="(item) in tableHead"
+                        :prop="item.prop"
+                        :label="item.label"
+                        width="200"
+                    >
+                    </el-table-column>
+                </el-table>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    let item = new Vue({
+        el: '#vue',
+        data: {
+            url: "",
+            code: "",
+            visible: false,
+            checkAll: false,
+            showCodeBlock: false,
+            isIndeterminate: true,
+            isGenerateDisabled: false,
+            checkedItems: '联调数据',
+            items: ['联调数据', '传参字段'],
+            dataSourceValue: '',
+            dataSourceOptions: [],
+            tableValue: '',
+            tableOptions: [],
+            tableData: [],
+            tableHead: [],
+        },
+        created() {
+            this.url = "http://localhost:8080";
+            // 获取数据源选项
+            axios({
+                "method":"get",
+                "url":this.url+"/table/datasource"
+            }).then(response => {
+                this.dataSourceOptions = response.data.data;
+            }).catch(error => {
+                console.log("获取数据源选项错误:"+error)
+            })
+        },
+        methods: {
+            handleCheckedCitiesChange(value) {
+                this.showCodeBlock = false
+                this.code = ""
+                this.isGenerateDisabled = false
+                this.checkedItems = value
+            },
+            // 获取数据表选项
+            checkDataSource(dataSourceName){
+                axios({
+                    "method":"get",
+                    "url":this.url+"/table/tables",
+                    "params":{
+                        "dataSource":dataSourceName
+                    }
+                }).then(response => {
+                    this.showCodeBlock = false
+                    this.code = ""
+                    this.tableValue = ""
+                    this.tableData = ""
+                    this.tableHead = ""
+                    this.tableOptions = response.data.data
+                    this.isGenerateDisabled = false
+                }).catch(error => {
+                    console.log("获取数据表选项错误:"+error)
+                })
+            },
+            // 选择数据表
+            checkTableName(dataSourceName){
+                this.showCodeBlock = false
+                this.code = ""
+                this.tableData = ""
+                this.tableHead = ""
+                this.isGenerateDisabled = false
+            },
+            // 获取逻辑类模板
+            generateLogicalTemplate(){
+                if(this.dataSourceValue == "" || this.tableValue == ""){
+                    this.$message({
+                        message: '获取联调数据条件不足，请选择数据源和数据表！',
+                        type: 'warning'
+                    });
+                    return
+                }
+                this.tableData = ""
+                this.tableHead = ""
+                this.isGenerateDisabled = true;
+                axios({
+                    "method":"get",
+                    "url":this.url+"/joint/data",
+                    "params":{
+                        "dataSource":this.dataSourceValue,
+                        "tableName":this.tableValue,
+                        "checkedItems": this.checkedItems
+                    }
+                }).then(response => {
+                    this.tableData = response.data.data.data;
+                    this.tableHead = response.data.data.head;
+                    this.showCodeBlock = true;
+                }).catch(error => {
+                    console.log("获取逻辑类模板错误:"+error)
+                })
+            }
+        },
+        computed: {
+            allCheckBtnStyle() {
+                return {
+                    'el-button-all-check': !this.isIndeterminate
+                }
+            }
+        }
+    })
+</script>
+
+</body>
+
+</html>

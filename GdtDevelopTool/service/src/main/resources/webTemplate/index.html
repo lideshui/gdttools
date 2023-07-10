@@ -37,7 +37,7 @@
 
     <!--页面主体-->
     <div class="layout-container">
-        <video class="video-background" preload="auto" loop playsinline autoplay src="/img/sleep.mp4" tabindex="-1" muted="muted"></video>
+<!--        <video class="video-background" preload="auto" loop playsinline autoplay src="/img/sleep.mp4" tabindex="-1" muted="muted"></video>-->
         <iframe class="iframe-container" v-for="(tab, index) in tabs" :src="tab.url" v-show="activeIndex === index"></iframe>
     </div>
 
@@ -59,8 +59,8 @@
                     url: "http://localhost:8080/javaTemplate"
                 },
                 {
-                    title: "暂未想好写什么",
-                    url: "http://localhost:8080/"
+                    title: "联调辅助功能",
+                    url: "http://localhost:8080/jointDebug"
                 }
             ],
             activeIndex: -1

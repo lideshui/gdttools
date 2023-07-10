@@ -28,7 +28,6 @@
         <alibaba.version>2.2.5.RELEASE</alibaba.version>
         <lombok.version>1.18.10</lombok.version>
         <fastjson.version>1.2.58</fastjson.version>
-        <gbase.version>1.0.0</gbase.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jdbctemplate.version>5.3.12</jdbctemplate.version>
         <mysqlconnector.version>8.0.26</mysqlconnector.version>
@@ -65,13 +64,6 @@
                 <groupId>com.alibaba</groupId>
                 <artifactId>fastjson</artifactId>
                 <version>${fastjson.version}</version>
-            </dependency>
-
-            <!-- gbase驱动 -->
-            <dependency>
-                <groupId>com.gbase</groupId>
-                <artifactId>jdbc</artifactId>
-                <version>${gbase.version}</version>
             </dependency>
 
             <!-- template依赖 -->

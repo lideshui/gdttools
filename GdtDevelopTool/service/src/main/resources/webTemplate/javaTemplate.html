@@ -5,42 +5,192 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7" />
+    <link rel="stylesheet" type="text/css" href="/css/page/javaTemplate.css" />
     <div th:include="common/head :: head"></div>
 </head>
 
 <body>
-<div class="container">
+<div class="body-container">
+<!--    <video class="video-background" preload="auto" loop playsinline autoplay src="/img/sea.mp4" tabindex="-1" muted="muted"></video>-->
     <div id="vue">
-        <div>1212121</div>
-        <h1>1111</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>222112</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>11112222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>221122</h1>
-        <h1>2222</h1>
-        <h1>1111</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2222</h1>
-        <h1>2221112</h1>
-        <h1>2222</h1>
-        <h1>2111222</h1>
-        <h1>2222</h1>
-        <h1>2211122</h1>
-        <h1>2222</h1>
+        <div class="grid-condition">
+            <h2 class="grid-title">设置生成代码片段</h2>
+
+            <el-row :gutter="20">
+                <!-- 生成方法复选框 -->
+                <el-col :span="16">
+                    <h3 class="grid-tips"><span>*</span>请选择生成类型</h3>
+                    <div class="grid-content bg-purple">
+                        <template>
+                            <div>
+                                <el-radio-group v-model="checkedItems" @change="handleCheckedCitiesChange">
+                                    <el-radio-button v-for="item in items" :label="item" :key="item">{{item}}</el-radio-button>
+                                </el-radio-group>
+                            </div>
+                        </template>
+                    </div>
+                </el-col>
+            </el-row>
+
+            <div style="text-align: center; margin-top: 15px">
+                <el-button @click="generateLogicalTemplate" type="danger" round :disabled="isGenerateDisabled">生成代码</el-button>
+            </div>
+        </div>
+
+        <div class="grid-condition" v-if="showCodeBlock">
+            <!-- 生成code展示 -->
+            <h2 class="grid-title">自动生成代码片段</h2>
+            <pre>
+                <code class="language-java line-numbers">
+                    {{code}}
+                </code>
+            </pre>
+        </div>
     </div>
 </div>
+
+<script th:inline="javascript">
+    let item = new Vue({
+        el: '#vue',
+        data: {
+            url: "",
+            code: "",
+            visible: false,
+            checkAll: false,
+            showCodeBlock: false,
+            isIndeterminate: true,
+            isGenerateDisabled: false,
+            checkedItems: '返回值设置',
+            items: ['返回值设置', '其他常用方法', '常用类型转换方法', '函数式编程方法'],
+            dataSourceValue: '',
+            dataSourceOptions: [],
+            tableValue: '',
+            tableOptions: [],
+        },
+        created() {
+            this.url = "http://localhost:8080";
+            // 获取数据源选项
+            axios({
+                "method":"get",
+                "url":this.url+"/table/datasource"
+            }).then(response => {
+                this.dataSourceOptions = response.data.data;
+            }).catch(error => {
+                console.log("获取数据源选项错误:"+error)
+            })
+        },
+        methods: {
+            handleCheckedCitiesChange(value) {
+                this.checkedItems = value
+                this.showCodeBlock = false
+                this.code = ""
+                this.isGenerateDisabled = false
+                let checkedCount = value.length;
+                this.checkAll = checkedCount === this.items.length;
+                this.isIndeterminate = !this.checkAll;
+            },
+            // 获取模板
+            generateLogicalTemplate(){
+                this.isGenerateDisabled = true;
+                if(this.checkedItems == "返回值设置"){
+                    this.code = "//返回自定义Message\n" +
+                        "JSONObject resultJson = new JSONObject();\n" +
+                        "resultJson.put(\"result\", \"success\");\n" +
+                        "resultJson.put(\"message\", \"整改信息审批成功!\");\n" +
+                        "result.setFormatType(FormatType.MESSAGE);\n" +
+                        "result.setMessage(JSON.toJSONString(resultJson));\n" +
+                        "\n" +
+                        "//返回分页List\n" +
+                        "List<Map<String,Object>> resultList = new ArrayList<>();\n" +
+                        "resultList = baseDao.executeSqlQuery(querySql.toString(),paramList.toArray(),start,limit);\n" +
+                        "result.setFormatType(FormatType.LIST);\n" +
+                        "result.setListData(resultList);\n" +
+                        "\n" +
+                        "//返回非分页List\n" +
+                        "List<Map<String,Object>> resultList = new ArrayList<>();\n" +
+                        "resultList = baseDao.executeSqlQuery(querySql.toString());\n" +
+                        "result.setFormatType(FormatType.LIST);\n" +
+                        "result.setListData(resultList);\n" +
+                        "result.setTplSuffix(\"nopage\");\n" +
+                        "\n" +
+                        "//返回树型\n" +
+                        "List<Map<String,Object>> resultList = new ArrayList<>();\n" +
+                        "resultList = baseDao.executeSqlQuery(querySql.toString());\n" +
+                        "result.setFormatType(FormatType.TREE);\n" +
+                        "result.setListData(resultList);"
+                }
+                if(this.checkedItems == "其他常用方法"){
+                    this.code = "/**\n" +
+                        " * 远程调用其他类的方法或接口\n" +
+                        " * 参数1 目标方法全类名\n" +
+                        " * 参数2 目标方法名\n" +
+                        " * 参数3 目标方法的参数列表\n" +
+                        " * 注意，执行该方法后需要切换数据源！\n" +
+                        " */\n" +
+                        "JSONObject resultFlow = (JSONObject)this.callClsMethod(\"com.sgitg.hggl.util.FlowUtil\", \"startApproval\", new Object[]{queryBean, baseDao, reqMap});\n" +
+                        "\n" +
+                        "//切换数据源\n" +
+                        "if (DynamicDataSourceContextHolder.containsDataSource(\"pipe_hggl\")) {\n" +
+                        "    DynamicDataSourceContextHolder.setDataSourceType(\"pipe_hggl\");\n" +
+                        "}\n" +
+                        "\n" +
+                        "//清除数据源\n" +
+                        "DynamicDataSourceContextHolder.clearDataSourceType();\n" +
+                        "\n" +
+                        "// 日志输出\n" +
+                        "PubLog.logOptInfo(LoggerLevel.INFO, \"####################日志输出内容为:\"+\"\", false);\n" +
+                        "\n" +
+                        "//获取业务参数\n" +
+                        "String comp_id = queryBean.getArgValue(\"name\");\n" +
+                        "\n" +
+                        "//获取分页参数\n" +
+                        "int start=queryBean.getExtParams().getStartInt();\n" +
+                        "int limit=queryBean.getExtParams().getLimitInt();\n" +
+                        "\n" +
+                        "//向请求域中设置业务参数\n" +
+                        "queryBean.addValue(\"name\", \"追加的参数\");\n" +
+                        "\n" +
+                        "//获取响应对象\n" +
+                        "HttpServletResponse response = queryBean.getResponse();\n" +
+                        "\n" +
+                        "//获取长参数时取消长度限制\n" +
+                        "String content = bean.getArgValue(\"content\",false);"
+                }
+                if(this.checkedItems == "常用类型转换方法"){
+                    this.code = "//转化序列化字符串\n" +
+                        "String sonData= queryBean.getNotLimitLenArgValue(\"sonData\");\n" +
+                        "String escapeJson = StringEscapeUtils.escapeJson(sonData);"
+                }
+                if(this.checkedItems == "函数式编程方法"){
+                    this.code = "//根据index进行排序\n" +
+                        "resultList = listData.stream().sorted(\n" +
+                        "    Comparator.comparingInt(\n" +
+                        "        map->Integer.valueOf(String.valueOf(map.get(\"index\"))))).collect(Collectors.toList());\t\n" +
+                        "\n" +
+                        "//遍历Map\n" +
+                        "sortMap.forEach((k,v)->{\t\n" +
+                        "    if(k.equals(String.valueOf(data.get(\"bzbh\")))){\n" +
+                        "        data.put(\"index\", v);\n" +
+                        "        return;\n" +
+                        "    }\n" +
+                        "});"
+                }
+                this.showCodeBlock = true;
+                this.$nextTick(() => {
+                    Prism.highlightAll()
+                })
+            }
+        },
+        computed: {
+            allCheckBtnStyle() {
+                return {
+                    'el-button-all-check': !this.isIndeterminate
+                }
+            }
+        }
+    })
+</script>
+
 </body>
 
 </html>

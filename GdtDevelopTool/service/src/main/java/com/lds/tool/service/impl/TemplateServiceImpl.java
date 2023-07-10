@@ -32,17 +32,24 @@ public class TemplateServiceImpl implements TemplateService {
      * 获取逻辑类模板
      */
     @Override
-    public String getLogicClass(String dataSource, String tableName) {
+    public String getLogicClass(String dataSource, String tableName, List<String> checkedList) {
         String logicClassCode;
         try {
+            // 构建生成逻辑类数据对象
+            Map<String, Object> structureMap = new HashMap<>();
+            structureMap.put("tableName", tableName);
+            structureMap.put("checkedList", checkedList);
+
             // 查询数据表字段
             List fieldList = this.queryField(dataSource, tableName);
+            structureMap.put("fieldList", fieldList);
 
             // 查询数据表注释
             String tableNotes = this.getTableRemark(dataSource, tableName);
+            structureMap.put("tableNotes", tableNotes);
 
             // 生成逻辑类模板
-            logicClassCode = this.generateLogicClass(tableName, tableNotes, fieldList);
+            logicClassCode = this.generateLogicClass(structureMap);
         } catch (Exception e) {
             throw new RuntimeException("获取逻辑类模板异常,原因:" + e);
         }
@@ -59,8 +66,14 @@ public class TemplateServiceImpl implements TemplateService {
             jdbcTemplate = applicationContext.getBean(dataSource, JdbcTemplate.class);
             jdbcTemplate.execute((Connection connection) -> {
                 DatabaseMetaData metadata = connection.getMetaData();
+                // 获取主键
+                ResultSet pKeys = metadata.getPrimaryKeys(dataSource, null, tableName);
+                String keyName = "";
+                while (pKeys.next()) {
+                    keyName = pKeys.getString("COLUMN_NAME");
+                }
                 // 获取字段的名称值和类型
-                ResultSet columns = metadata.getColumns(null, null, tableName, "%");
+                ResultSet columns = metadata.getColumns(dataSource, null, tableName, "%");
                 while (columns.next()) {
                     Map<String, String> fieldMap = new HashMap<>();
                     // 获取字段名
@@ -72,12 +85,16 @@ public class TemplateServiceImpl implements TemplateService {
                     // 获取注释
                     String columnRemark = columns.getString("REMARKS");
                     fieldMap.put("remark", columnRemark);
-                    // 是否为公共字段 1是0否
-                    if (columnName.startsWith("pub_") || columnName.startsWith("is_delete")){
-                        fieldMap.put("is_pub", "1");
-                    } else {
-                        fieldMap.put("is_pub", "0");
-                    }
+                    // 获取是否为主键
+                    String is_key = columnName.equals(keyName) ? "0" : "1";
+                    fieldMap.put("is_key", is_key);
+                    // 获取是否为公共参数
+                    String is_pub = columnName.contains("pub_") ? "0" : "1";
+                    fieldMap.put("is_pub", is_pub);
+                    // 获取是否为逻辑删除参数
+                    String is_del = columnName.contains("is_del") ? "0" : "1";
+                    fieldMap.put("is_del", is_del);
+                    // 合并信息
                     fieldList.add(fieldMap);
                 }
                 return null;
@@ -98,7 +115,7 @@ public class TemplateServiceImpl implements TemplateService {
             jdbcTemplate = applicationContext.getBean(dataSource, JdbcTemplate.class);
             jdbcTemplate.execute((ConnectionCallback<Object>) connection -> {
                 DatabaseMetaData metaData = connection.getMetaData();
-                ResultSet resultSet = metaData.getTables(null, null, tableName, new String[]{"TABLE"});
+                ResultSet resultSet = metaData.getTables(dataSource, null, tableName, new String[]{"TABLE"});
                 if (resultSet.next()) {
                     tableRemark.set(resultSet.getString("REMARKS")); // 获取表注释
                 }
@@ -113,7 +130,7 @@ public class TemplateServiceImpl implements TemplateService {
     /**
      * 生成逻辑类模板
      */
-    private String generateLogicClass(String tableName, String tableNotes, List fieldList) {
+    private String generateLogicClass(Map structureMap) {
         String logicClassCode;
         try {
             // 加载模板配置
@@ -130,32 +147,21 @@ public class TemplateServiceImpl implements TemplateService {
             String currDate = this.getCurrDate();
 
             // 获取字段信息 业务bus 公共pub 全部all 占位符symbol
-            Map<String, StringBuilder> fieldMap = this.getField(fieldList);
+            Map<String, StringBuilder> fieldMap = this.getField((List)structureMap.get("fieldList"));
 
             // 准备要填充的数据
+            // 模板基础数据
             Map<String, Object> data = new HashMap<>();
-            data.put("description", tableNotes); //注释-类描述
+            data.put("description", structureMap.get("tableNotes")); //注释-类描述
             data.put("author", env.getProperty("template.author")); //注释-作者
             data.put("version", env.getProperty("template.version")); //注释-版本
             data.put("date", currDate); //注释-创建时间
-            data.put("package", env.getProperty("template.package") + this.getFirstWord(tableName)); //包名
-            data.put("className", this.toCamelCase(tableName)); //驼峰类名
-            data.put("fields", fieldList); //属性列表
-            data.put("tableName", tableName); //表名
+            data.put("package", env.getProperty("template.package") + this.getFirstWord(String.valueOf(structureMap.get("tableName")))); //包名
+            data.put("className", this.toCamelCase(String.valueOf(structureMap.get("tableName")))); //驼峰类名
+            data.put("fields", structureMap.get("fieldList")); //属性列表
+            data.put("tableName", structureMap.get("tableName")); //表名
             data.put("fieldMap", fieldMap); //字段信息 业务bus 公共pub 全部all 占位符symbol
-
-
-
-
-
-            data.put("imports", new String[]{"java.util.List"});
-
-            data.put("methods", new String[]{
-                    "public int getId() { return id; }",
-                    "public void setId(int id) { this.id = id; }",
-                    "public String getName() { return name; }",
-                    "public void setName(String name) { this.name = name; }"
-            });
+            data.put("checkedList", structureMap.get("checkedList")); //已选择生成方法的列表
 
             // 将模板和数据合并，生成目标文本
             StringWriter out = new StringWriter();
@@ -215,43 +221,65 @@ public class TemplateServiceImpl implements TemplateService {
         StringBuilder allFields = new StringBuilder();
         // 占位符
         StringBuilder symbols = new StringBuilder();
+        // 业务字段修改
+        StringBuilder busEditFields = new StringBuilder();
+        // 公共字段修改
+        StringBuilder pubEditFields = new StringBuilder();
 
         for (Map<String, Object> map : (List<Map<String, Object>>)filedList) {
-            Object value = map.get("name"); // key为您想要获取的值对应的键名
+            String filed = String.valueOf(map.get("name")); // 获取字段名
+            // 拼接占位符
+            if (symbols.length() > 0) {
+                symbols.append(", ");
+            }
+            symbols.append("?");
 
-            if (value != null) {
-                String valueString = value.toString();
-                // 拼接占位符
-                if (symbols.length() > 0) {
-                    symbols.append(", ");
+            // 拼接全字段
+            if (allFields.length() > 0) {
+                allFields.append(", ");
+            }
+            allFields.append(filed);
+
+            // 拼接公共字段和逻辑删除字段
+            if("0".equals(map.get("is_pub")) || "0".equals(map.get("is_del"))) {
+                if (pubFields.length() > 0) {
+                    pubFields.append(", ");
                 }
-                symbols.append("?");
-                // 拼接全字段
-                if (allFields.length() > 0) {
-                    allFields.append(",");
+                pubFields.append(filed);
+            }
+
+            // 拼接业务字段
+            if("1".equals(map.get("is_pub")) && "1".equals(map.get("is_del"))) {
+                if (busFields.length() > 0) {
+                    busFields.append(", ");
                 }
-                allFields.append(valueString);
-                // 拼接公共字段
-                if (valueString.startsWith("pub_") || valueString.startsWith("is_delete")) {
-                    if (pubFields.length() > 0) {
-                        pubFields.append(", ");
-                    }
-                    pubFields.append(valueString);
-                } else {
-                    // 拼接业务字段
-                    if (busFields.length() > 0) {
-                        busFields.append(", ");
-                    }
-                    busFields.append(valueString);
+                busFields.append(filed);
+            }
+
+            // 拼接公共修改字段
+            if("0".equals(map.get("is_pub")) && filed.contains("modified")) {
+                if (pubEditFields.length() > 0) {
+                    pubEditFields.append(", ");
                 }
+                pubEditFields.append(filed + " = ?");
+            }
+            // 拼接业务修改字段
+            if("1".equals(map.get("is_key")) && "1".equals(map.get("is_pub")) && "1".equals(map.get("is_del"))) {
+                if (busEditFields.length() > 0) {
+                    busEditFields.append(", ");
+                }
+                busEditFields.append(filed + " = ?");
             }
         }
         fieldMap.put("bus", busFields);
         fieldMap.put("pub", pubFields);
         fieldMap.put("all", allFields);
         fieldMap.put("symbol", symbols);
+        fieldMap.put("edit_bus", busEditFields);
+        fieldMap.put("edit_pub", pubEditFields);
         return fieldMap;
     }
+    
 
     /**
      * 获取当前时间
@@ -263,4 +291,5 @@ public class TemplateServiceImpl implements TemplateService {
         String currDate = currentDateTime.format(formatter);
         return currDate;
     }
+
 }

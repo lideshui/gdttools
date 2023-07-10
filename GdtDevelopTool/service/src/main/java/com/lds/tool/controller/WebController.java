@@ -30,4 +30,12 @@ public class WebController {
     public String javaTemplate(Model model) {
         return "javaTemplate";
     }
+
+    /**
+     * 多种java模板页
+     */
+    @GetMapping({"/jointDebug", "/jointDebug.html"})
+    public String jointDebug(Model model) {
+        return "jointDebug";
+    }
 }
